@@ -1,0 +1,1 @@
+"Libaray\Hardware\smg.c" OPTIMIZE (8,SPEED) BROWSE INCDIR(.\Libaray\System;.\Libaray\Hardware) DEBUG OBJECTEXTEND PRINT(.\Listings\smg.lst) TABS (2) OBJECT(.\Objects\smg.obj)

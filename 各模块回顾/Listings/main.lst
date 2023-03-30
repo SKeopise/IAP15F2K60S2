@@ -1,0 +1,288 @@
+C51 COMPILER V9.60.0.0   MAIN                                                              03/29/2023 18:26:40 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\MDK\C51\BIN\C51.EXE User\main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\Libaray\System;.\Libaray\Hardw
+                    -are) DEBUG OBJECTEXTEND PRINT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "system.h"
+   2          
+   3          #define TEMP    0
+   4          #define TIME    1
+   5          #define EEPROM  2
+   6          #define ADC     3
+   7          #define DAC     4
+   8          #define SONIC   5
+   9          u8 display = TEMP;
+  10          
+  11          //串口接受到标志
+  12          bit sendflag = 0;
+  13          char cmd[12];
+  14          //系统初始化
+  15          void SystemProcess()
+  16          {
+  17   1        DeviceCtrl(0x80,0xff);//led
+  18   1        DeviceCtrl(0xa0,0x00);//buzz and relay
+  19   1        
+  20   1      }
+  21          //SONIC测距
+  22          u8 sonicnt = 0;
+  23          u16 distance =0 ;
+  24          char disbuf[10];
+  25          void SonicProcess()
+  26          {
+  27   1        if(sonicnt>200){
+  28   2          sonicnt = 0;
+  29   2          distance = GetDistance();
+  30   2        }
+  31   1      }
+  32          //DAC输出
+  33          u8 dacnt = 0;
+  34          u8 dacval = 220;
+  35          u16 dacdis = 0;
+  36          void DacProcess()
+  37          {
+  38   1        if(dacnt>180){
+  39   2          dacnt = 0;
+  40   2          Dacout(dacval);
+  41   2          dacdis = (u16)(100*((float)dacval/51));
+  42   2        }
+  43   1      }
+  44          //获取ADC采样
+  45          u8 adcnt = 0 ;
+  46          u16 ch1 = 0;//光敏
+  47          u16 ch3 = 0;//电压
+  48          bit adcmode = 0;
+  49          void AdcProcess()
+  50          {
+  51   1        if(adcnt>100){
+  52   2          adcnt = 0;
+  53   2          ReadAdc(0x43);                          //空读一次 ，转换是上一次的么
+  54   2          ch3  = (((float)ReadAdc(0x43)/51)*100); //电位器
+C51 COMPILER V9.60.0.0   MAIN                                                              03/29/2023 18:26:40 PAGE 2   
+
+  55   2          ReadAdc(0x41);                          //空读一次 ，转换是上一次的么
+  56   2          ch1  = (((float)ReadAdc(0x41)/51)*100); //光敏电阻
+  57   2        }
+  58   1      }
+  59          //EEPROM记录开机次数
+  60          u8 opennum = 0;
+  61          //获取时间函数
+  62          u8 timecnt =0 ;
+  63          u8 hour,min,sec;
+  64          void TimeProcess()
+  65          {
+  66   1        if(timecnt>100){
+  67   2          timecnt = 0;
+  68   2          hour = BcdToDec(Read_Ds1302_Byte(0x85));
+  69   2          min  = BcdToDec(Read_Ds1302_Byte(0x83));
+  70   2          sec  = BcdToDec(Read_Ds1302_Byte(0x81));
+  71   2        }
+  72   1      }
+  73          //温度读取
+  74          u8 tempcnt = 0;
+  75          u16 temp = 0;
+  76          void TempProcess()
+  77          {
+  78   1        if(tempcnt>100){
+  79   2          tempcnt = 0;
+  80   2          temp = (u16)(ReadTemp()*10);//一位小数
+  81   2          if(temp==850){
+  82   3            temp =230;
+  83   3          }
+  84   2        }
+  85   1      }
+  86          // 独立按键获取程序
+  87          u8 keycnt = 0 ;
+  88          void BtnProcess()
+  89          {
+  90   1        if(keycnt>15){
+  91   2          keycnt = 0;
+  92   2          BtnThree();
+  93   2          if(Btrg==0x08){
+  94   3            display = (display+1)%6;
+  95   3          }
+  96   2          if(Btrg==0x01){
+  97   3            memset(disbuf,'\0',10);
+  98   3            sprintf(disbuf,"距离是:%d",distance);
+  99   3            SendString(disbuf);
+ 100   3            SendString("\r\n");
+ 101   3          }
+ 102   2          if(Bcont==0x04){//s5 长按
+ 103   3            if(display==ADC){
+ 104   4              adcmode = 1;
+ 105   4            }
+ 106   3          }
+ 107   2          if(Btrg==0x00&&Bcont==0x00){//弹起检测
+ 108   3            if(display==ADC){
+ 109   4                adcmode = 0;
+ 110   4              }
+ 111   3          }
+ 112   2          if(display==DAC){
+ 113   3            if(Btrg==0x02){
+ 114   4              dacval = dacval + 20; //因为借助按键发送Sonic数据暂时不开
+ 115   4            }
+ 116   3            if(Btrg==0x01){
+C51 COMPILER V9.60.0.0   MAIN                                                              03/29/2023 18:26:40 PAGE 3   
+
+ 117   4            //  dacval = dacval - 20; //因为借助按键发送Sonic数据暂时不开
+ 118   4            }
+ 119   3          }
+ 120   2        } 
+ 121   1      }
+ 122          //数码管缓存函数
+ 123          void SmgProcess()
+ 124          {
+ 125   1        if(display==TEMP){
+ 126   2          smgbuf[0] = smgcode[1];
+ 127   2          smgbuf[1] = smgcode[10];
+ 128   2          smgbuf[2] = smgcode[10];
+ 129   2          smgbuf[3] = smgcode[10];
+ 130   2          smgbuf[4] = smgcode[10];
+ 131   2          smgbuf[5] = smgcode[temp/100%10];
+ 132   2          smgbuf[6] = smgcode[temp/10%10]|0x80;
+ 133   2          smgbuf[7] = smgcode[temp%10];
+ 134   2        }else if(display==TIME){
+ 135   2          smgbuf[0] = smgcode[hour/10%10];
+ 136   2          smgbuf[1] = smgcode[hour%10];
+ 137   2          smgbuf[2] = 0x40;
+ 138   2          smgbuf[3] = smgcode[min/10%10];
+ 139   2          smgbuf[4] = smgcode[min%10];
+ 140   2          smgbuf[5] = 0x40;
+ 141   2          smgbuf[6] = smgcode[sec/10%10];
+ 142   2          smgbuf[7] = smgcode[sec%10];
+ 143   2        }else if(display==EEPROM){
+ 144   2          smgbuf[0] = smgcode[3];
+ 145   2          smgbuf[1] = smgcode[10];
+ 146   2          smgbuf[2] = smgcode[10];
+ 147   2          smgbuf[3] = smgcode[10];
+ 148   2          smgbuf[4] = smgcode[10];
+ 149   2          smgbuf[5] = smgcode[opennum/100%10];
+ 150   2          smgbuf[6] = smgcode[opennum/10%10];
+ 151   2          smgbuf[7] = smgcode[opennum%10];
+ 152   2        }else if(display==ADC){
+ 153   2          if(adcmode==0){
+ 154   3              smgbuf[0] = smgcode[4];
+ 155   3              smgbuf[1] = smgcode[10];
+ 156   3              smgbuf[2] = smgcode[10];
+ 157   3              smgbuf[3] = smgcode[10];
+ 158   3              smgbuf[4] = smgcode[10];
+ 159   3              smgbuf[5] = smgcode[ch1/100%10]|0x80;
+ 160   3              smgbuf[6] = smgcode[ch1/10%10];
+ 161   3              smgbuf[7] = smgcode[ch1%10];
+ 162   3            }else{
+ 163   3              smgbuf[0] = smgcode[4];
+ 164   3              smgbuf[1] = smgcode[10];
+ 165   3              smgbuf[2] = smgcode[10];
+ 166   3              smgbuf[3] = smgcode[10];
+ 167   3              smgbuf[4] = smgcode[10];
+ 168   3              smgbuf[5] = smgcode[ch3/100%10]|0x80;
+ 169   3              smgbuf[6] = smgcode[ch3/10%10];
+ 170   3              smgbuf[7] = smgcode[ch3%10];
+ 171   3            }
+ 172   2        }else if(display==DAC){
+ 173   2          smgbuf[0] = smgcode[5];
+ 174   2          smgbuf[1] = smgcode[10];
+ 175   2          smgbuf[2] = smgcode[10];
+ 176   2          smgbuf[3] = smgcode[10];
+ 177   2          smgbuf[4] = smgcode[10];
+ 178   2          smgbuf[5] = smgcode[dacdis/100%10]|0x80;
+C51 COMPILER V9.60.0.0   MAIN                                                              03/29/2023 18:26:40 PAGE 4   
+
+ 179   2          smgbuf[6] = smgcode[dacdis/10%10];
+ 180   2          smgbuf[7] = smgcode[dacdis%10];
+ 181   2        }else if(display==SONIC){
+ 182   2          smgbuf[0] = smgcode[6];
+ 183   2          smgbuf[1] = smgcode[10];
+ 184   2          smgbuf[2] = smgcode[10];
+ 185   2          smgbuf[3] = smgcode[10];
+ 186   2          smgbuf[4] = smgcode[10];
+ 187   2          smgbuf[5] = smgcode[distance/100%10];
+ 188   2          smgbuf[6] = smgcode[distance/10%10];
+ 189   2          smgbuf[7] = smgcode[distance%10];
+ 190   2        }
+ 191   1      }
+ 192          //主函数
+ 193          void main()
+ 194          { 
+ 195   1        SystemProcess();// 额 这个放在 while1 之前啊  
+ 196   1        Timer2Init();
+ 197   1        SetClock(23,59,53);
+ 198   1        opennum = ReadEeprom(0x00);
+ 199   1        WriteEeprom(0x00,++opennum);
+ 200   1        Timer0Init();
+ 201   1        UartInit();
+ 202   1        while(1)
+ 203   1        {
+ 204   2          TimeProcess();
+ 205   2          SmgProcess();
+ 206   2          BtnProcess();
+ 207   2          TempProcess();
+ 208   2          AdcProcess();
+ 209   2          DacProcess();
+ 210   2          SonicProcess();
+ 211   2          if(sendflag==1){ //如果有数据接收到，才发送
+ 212   3            sendflag = 0;
+ 213   3            SendString("recive data:");
+ 214   3            SendString(cmd);
+ 215   3            SendString("\r\n");
+ 216   3            memset(cmd,'\0',12);
+ 217   3          }
+ 218   2        }
+ 219   1      }
+ 220          //定时器2中断服务函数
+ 221          void Timer2Handler() interrupt 12
+ 222          { 
+ 223   1        ScanfSmg(); 
+ 224   1        keycnt++;
+ 225   1        tempcnt++;
+ 226   1        timecnt++;
+ 227   1        adcnt++;
+ 228   1        dacnt++;
+ 229   1        sonicnt++;  
+ 230   1      }
+ 231          //串口一中断服务函数
+ 232          void UartHandler() interrupt 4
+ 233          {
+ 234   1      //  char cmd[12]; //这里千万别初始化为0 否则 strcmp 永远不相等
+ 235   1        char tmp ;  
+ 236   1        static u8 i =0;
+ 237   1      
+ 238   1        if(TI){
+ 239   2          TI =0 ;
+ 240   2        }
+C51 COMPILER V9.60.0.0   MAIN                                                              03/29/2023 18:26:40 PAGE 5   
+
+ 241   1        if(RI){
+ 242   2          RI = 0;
+ 243   2          tmp = SBUF;
+ 244   2          if(tmp=='o'){
+ 245   3            i = 0;
+ 246   3          }
+ 247   2          cmd[i++] = tmp;   
+ 248   2          if(strcmp(cmd,"openacd")==0){
+ 249   3            i = 0;
+ 250   3            sendflag = 1;
+ 251   3          } 
+ 252   2          if(i>=12){i=0;memset(cmd,'\0',12);}
+ 253   2        }
+ 254   1      }
+ 255          
+ 256          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1525    ----
+   CONSTANT SIZE    =     34    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     45    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

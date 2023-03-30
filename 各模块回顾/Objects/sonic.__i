@@ -1,0 +1,1 @@
+"Libaray\Hardware\sonic.c" OPTIMIZE (8,SPEED) BROWSE INCDIR(.\Libaray\System;.\Libaray\Hardware) DEBUG OBJECTEXTEND PRINT(.\Listings\sonic.lst) TABS (2) OBJECT(.\Objects\sonic.obj)

@@ -1,0 +1,15 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj",
+".\Objects\timer.obj",
+".\Objects\delay.obj",
+".\Objects\device.obj",
+".\Objects\smg.obj",
+".\Objects\kbd.obj",
+".\Objects\btn.obj",
+".\Objects\onewire.obj",
+".\Objects\ds1302.obj",
+".\Objects\iic.obj",
+".\Objects\sonic.obj",
+".\Objects\uart.obj" 
+TO ".\Objects\moban" 
+PRINT(".\Listings\moban.m51") RAMSIZE(256) 

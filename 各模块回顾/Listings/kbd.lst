@@ -1,0 +1,100 @@
+C51 COMPILER V9.60.0.0   KBD                                                               03/29/2023 18:26:40 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE KBD
+OBJECT MODULE PLACED IN .\Objects\kbd.obj
+COMPILER INVOKED BY: D:\MDK\C51\BIN\C51.EXE Libaray\Hardware\kbd.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\Libaray\System;.\Li
+                    -baray\Hardware) DEBUG OBJECTEXTEND PRINT(.\Listings\kbd.lst) TABS(2) OBJECT(.\Objects\kbd.obj)
+
+line level    source
+
+   1          #include "kbd.h"
+   2          
+   3          u8 GetioThree()
+   4          {
+   5   1        u8 io = 0xff;
+   6   1      
+   7   1        P3=0xf0;P4=0xff;//先列
+   8   1        if(P44==0){io = 0x70;}
+   9   1        if(P42==0){io = 0xb0;}
+  10   1        if(P35==0){io = 0xd0;}
+  11   1        if(P34==0){io = 0xe0;}
+  12   1        P3=0x0f;P4=0x00;//再行
+  13   1        if(P33==0){io |= 0x07;}
+  14   1        if(P32==0){io |= 0x0b;}
+  15   1        if(P31==0){io |= 0x0d;}
+  16   1        if(P30==0){io |= 0x0e;}
+  17   1        
+  18   1        return io;
+  19   1        
+  20   1      }
+  21          u8 Trg = 0;
+  22          u8 Cont = 0;
+  23          void KbdThree()
+  24          {
+  25   1        u8 readdata = GetioThree()^0xff;
+  26   1        Trg = readdata&(readdata^Cont);
+  27   1        Cont = readdata;
+  28   1        
+  29   1      }
+  30          
+  31          u8 GetIoState()
+  32          {
+  33   1        u8 io = 0;
+  34   1      
+  35   1        P3=0xf0;P4=0xff;//先列
+  36   1        if(P44==0){io = 4;}
+  37   1        if(P42==0){io = 8;}
+  38   1        if(P35==0){io = 12;}
+  39   1        if(P34==0){io = 16;}
+  40   1        P3=0x0f;P4=0x00;//再行
+  41   1        if(P33==0){io = io+0;}
+  42   1        if(P32==0){io = io+1;}
+  43   1        if(P31==0){io = io+2;}
+  44   1        if(P30==0){io = io+3;}
+  45   1        
+  46   1        return io;
+  47   1      }
+  48          
+  49          u8 KbdState()
+  50          {
+  51   1        static u8 state = 0;
+  52   1        u8 keyreturn = 0;
+  53   1        u8 keypress  = GetIoState();
+  54   1        
+C51 COMPILER V9.60.0.0   KBD                                                               03/29/2023 18:26:40 PAGE 2   
+
+  55   1        switch(state)
+  56   1        {
+  57   2          case 0 :if(keypress!=0){state = 1;}break;
+  58   2          case 1 :if(keypress!=0){
+  59   3                    keyreturn  = keypress;
+  60   3                    state  = 2;
+  61   3                  }else{
+  62   3                    state  = 0;
+  63   3                  }
+  64   2                  break;
+  65   2          case 2:if(keypress==0){
+  66   3                    state  = 0;
+  67   3                  }
+  68   2                break;
+  69   2                
+  70   2        } 
+  71   1        return keyreturn;
+  72   1      }
+  73          
+  74            
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    170    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

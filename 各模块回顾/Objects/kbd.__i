@@ -1,0 +1,1 @@
+"Libaray\Hardware\kbd.c" OPTIMIZE (8,SPEED) BROWSE INCDIR(.\Libaray\System;.\Libaray\Hardware) DEBUG OBJECTEXTEND PRINT(.\Listings\kbd.lst) TABS (2) OBJECT(.\Objects\kbd.obj)

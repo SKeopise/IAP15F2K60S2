@@ -1,0 +1,1 @@
+"Libaray\Hardware\btn.c" OPTIMIZE (8,SPEED) BROWSE INCDIR(.\Libaray\System;.\Libaray\Hardware) DEBUG OBJECTEXTEND PRINT(.\Listings\btn.lst) TABS (2) OBJECT(.\Objects\btn.obj)

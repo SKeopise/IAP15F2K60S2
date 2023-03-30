@@ -1,0 +1,65 @@
+C51 COMPILER V9.60.0.0   BTN                                                               03/29/2023 18:26:40 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE BTN
+OBJECT MODULE PLACED IN .\Objects\btn.obj
+COMPILER INVOKED BY: D:\MDK\C51\BIN\C51.EXE Libaray\Hardware\btn.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\Libaray\System;.\Li
+                    -baray\Hardware) DEBUG OBJECTEXTEND PRINT(.\Listings\btn.lst) TABS(2) OBJECT(.\Objects\btn.obj)
+
+line level    source
+
+   1          #include "btn.h"
+   2          
+   3          u8 Btrg = 0;
+   4          u8 Bcont = 0;
+   5          void BtnThree()
+   6          {
+   7   1        u8 readdata = P3^0xff;
+   8   1        Btrg = readdata&(readdata^Bcont);
+   9   1        Bcont = readdata; 
+  10   1      }
+  11          
+  12          
+  13          u8 BtnState()
+  14          {
+  15   1        static u8 state = 0;
+  16   1        u8 keyreturn = 0; 
+  17   1        u8 keypress = 0;
+  18   1        
+  19   1        keypress = P3 & 0x0F;
+  20   1        
+  21   1        switch(state){
+  22   2          case 0:if(keypress!=0x0f){state = 1;} break;
+  23   2          case 1:if(keypress!=0x0f){
+  24   3                    if(keypress==0x07){keyreturn=4;}
+  25   3                    if(keypress==0x0b){keyreturn=5;}
+  26   3                    if(keypress==0x0d){keyreturn=6;}
+  27   3                    if(keypress==0x0e){keyreturn=7;}
+  28   3                    state = 2;
+  29   3                  }else{
+  30   3                    state = 0;
+  31   3                  }
+  32   2                break;
+  33   2          case 2:if(keypress==0x0f){
+  34   3                    state = 0;
+  35   3                  }
+  36   2                break;
+  37   2        }
+  38   1        
+  39   1        return keyreturn;
+  40   1        
+  41   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     95    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
